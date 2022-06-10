@@ -7,12 +7,30 @@ const cors = require('cors')
 const app = express();
 const http = require('http').Server(app);
 
+const error = require('./middleware/error');
+const { PrismaClient } = require("@prisma/client");
+const { body, validationResult } = require('express-validator');
 
-// // Load Controllers
+global.asyncHandler = require('./middleware/async');
+global.ErrorResponse = require('./library/errorResponse');
+global.prismaTable = require('./library/prismatable');
+global.moment = require('moment');
+global.bcrypt = require('bcryptjs');
+global.jwt = require('jsonwebtoken');
+global.body = body;
+global.validationResult = validationResult;
+global.prisma = new PrismaClient({});
+
+prisma.$on('query', (e) => {
+    // console.log('Query: ' + e.query)
+    // console.log('Params: ' + e.params)
+    // console.log('Duration: ' + e.duration + 'ms')
+})
+
+// Load Controllers
 const user = require('./routes/user');
+const post = require('./routes/post');
 
-// // Set Controller
-app.use('/api/user', user);
 
 // Load Parser
 app.use(express.json());
@@ -22,6 +40,12 @@ app.use(fileupload());
 
 // set cors
 app.use(cors())
+
+// Set Controller
+app.use('/api/user', user);
+app.use('/api/post', post);
+
+app.use(error)
 
 // Specifying PORT
 const PORT = process.env.PORT || 8080;

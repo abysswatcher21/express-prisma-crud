@@ -1,4 +1,4 @@
-module.exports = async (req, model, where = {}, include = {}) => {
+module.exports = async (req, model, select = {}, where = {}, include = {}) => {
     const reqQuery = { ...req.query };
 
     //fields to exclude
@@ -12,6 +12,17 @@ module.exports = async (req, model, where = {}, include = {}) => {
 
     let querying = new Object;
     querying.where = JSON.parse(queryStr);
+
+    Object.keys(querying.where).forEach((filter) => {
+        if (filter.startsWith("date")) {
+            let newFilter = filter.replace('date.', '');
+            querying.where[newFilter] = {}
+            querying.where[newFilter][Object.keys(querying.where[filter])[0]] = new Date(Object.values(querying.where[filter])[0])
+
+            delete querying.where[filter];
+        }
+    })
+
     querying.where = { ...querying.where, ...where };
 
     // select field
@@ -25,6 +36,12 @@ module.exports = async (req, model, where = {}, include = {}) => {
         });
 
         querying.select = select_obj;
+
+        // console.log(select_obj);
+    }
+
+    if (Object.keys(select).length !== 0) {
+        querying.select = select;
     }
 
     // Sort Field
@@ -81,7 +98,7 @@ module.exports = async (req, model, where = {}, include = {}) => {
     }
 
 
-    pagination.totalDisplay = totalDisplay;
+    pagination.limit = totalDisplay;
 
     pagination.start = startIndex;
     pagination.end = endIndex;
